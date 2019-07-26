@@ -35,16 +35,18 @@ drawer = MapDrawer('mapa.png', 'flag.png')
 concejos, territories = readConcejosAndTerritories()
 collisionMatrix = generateCollisionMatrix(territories)
 
-
+turno = 0
 while True:
-    # Filter alive concejos
-    aliveConcejos = filter(lambda c : c.isAlive(), concejos)
+    turno+=1
     # Select concejo that is going to atack
-    attackerConcejo = random.choice(aliveConcejos)
-    # Select concejo from which to attack
-    attackSource = random.choice(attackerConcejo.owned)
-    # Get possible objectives list
-    possibleObjectives = map(lambda (i,x): i, filter(lambda (i,x): x, enumerate(collisionMatrix[attackSource])))
+    possibleObjectives = []
+    while len(possibleObjectives) == 0:
+        attackerTerritory = random.choice(territories)
+        attackerConcejo = concejos[attackerTerritory.owner]
+        # Select concejo from which to attack
+        # Get possible objectives list
+        possibleObjectives = map(lambda (i,x): i, filter(lambda (i,x): x and i not in attackerConcejo.owned, enumerate(collisionMatrix[attackerTerritory.index])))
+
     # Select objective
     objectiveIndex = random.choice(possibleObjectives)
     objective = territories[objectiveIndex]
@@ -57,13 +59,15 @@ while True:
     attackerConcejo.owned.append(objectiveIndex)
 
     drawer.drawMap(territories, concejos, objective)
-    
+    print('Turno ' + str(turno))
     print(attackerConcejo.name + ' ha conquistado ' + objective.name + ' previamente controlado por ' + previousOwner.name + '.')
 
     if not previousOwner.isAlive():
         print('El concejo de ' + previousOwner.name + ' ha sido completamente derrotado.')
-    
-    remainingAliveConcejos = sum(1 for i in aliveConcejos if i.isAlive())
+    remainingAliveConcejos = sum(1 for i in concejos if i.isAlive())
+    if remainingAliveConcejos == 1:
+        winner = next(x for x in concejos if x.isAlive())
+        print(winner.name + ' ha conquistado Asturias.')
     print(str(remainingAliveConcejos) + ' concejos restantes.')
 
     
